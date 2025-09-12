@@ -36,29 +36,29 @@ use ScavixWDF\Model\DataSource;
 
 /**
  * Base class for google visualization controls.
- * 
+ *
  */
 abstract class GoogleVisualization extends GoogleControl implements ICallable
 {
 	public static $UseMaterialDesign = false;
 	public static $DefaultDatasource = false;
 	public static $Colors;
-	
+
 	public $_columnDef = false;
 	public $_data = [];
 	public $_rowCallbacks = [];
 	public $_roleCallbacks = [];
-	
+
 	public $_entities = [];
 	public $_ds;
-	
+
 	public $gvType;
 	public $gvOptions;
 	public $gvQuery;
-	
+
 	/**
 	 * Static creator function.
-	 * 
+	 *
 	 * @param mixed ...$args Only one argument allowed: Title
 	 * @return GoogleVisualization Created control
 	 */
@@ -69,10 +69,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		if( count($args) )
 			$res->opt('title',$args[0]);
 		if( self::$Colors )
-			$res->opt('colors',self::$Colors);		
+			$res->opt('colors',self::$Colors);
 		return $res;
 	}
-	
+
 	/**
 	 * @param string $type Type of google visualization
 	 * @param array $options Options. Depends on $type
@@ -83,26 +83,26 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	{
 		parent::__construct();
 		$this->addClass('google_vis');
-		
+
 		$this->_ds = $ds?$ds:(self::$DefaultDatasource?self::$DefaultDatasource:DataSource::Get());
-		
+
         $this->gvOptions = ['tooltip' => ['isHtml' => true]];
-        
+
 		$this->gvType = $type?$type:substr(get_class_simple($this),2);
 		$this->gvOptions = $options?array_merge($this->gvOptions,$options):$this->gvOptions;
 		$this->gvQuery = $query;
-		
+
 		$this->content("<div class='loading'>&nbsp;</div>");
 		store_object($this);
 	}
-	
+
 	private function _applyRowCallbacks($row)
 	{
 		foreach( $this->_rowCallbacks as $rcb )
 			$row = $rcb($row);
 		return $row;
 	}
-	
+
 	/**
 	 * @override
      * @suppress PHP0410
@@ -110,7 +110,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	function PreRender($args = [])
 	{
 		$this->_data = array_values_rec($this->_data,2);
-		
+
 		if( count($this->_data)>1 || $this->_columnDef )
 		{
             if(is_array(self::$Colors))
@@ -122,7 +122,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
                 if( count($cols)>0 )
                     $this->opt('colors',$cols);
             }
-            
+
 			$id = $this->id; $d = "d$id"; $c = "c$id";
             if(!self::$UseMaterialDesign && isset($this->gvOptions['isStacked']) && isset($this->gvOptions['colors']) && is_array($this->gvOptions['colors']) && (count($this->gvOptions['colors']) > 1))
                 $opts = json_encode($this->gvOptions, JSON_FORCE_OBJECT);
@@ -133,9 +133,9 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
             if($this->_columnDef)
                 $coldefs = array_values($this->_columnDef);
 
-			array_walk_recursive($this->_data, function(&$item, $key) use ($coldefs) { 
+			array_walk_recursive($this->_data, function(&$item, $key) use ($coldefs) {
                 //log_debug($key, $item);
-                if( $item instanceof DateTime) 
+                if( $item instanceof DateTime)
                     $item = "[jscode]new Date(".($item->getTimestamp()*1000).")";
                 elseif($coldefs)
                 {
@@ -153,9 +153,9 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
                     }
                 }
             });
-            
+
 			$data = system_to_json($this->_data);
-			if( self::$UseMaterialDesign && in_array($this->gvType, array('Bar', 'Column')))
+			if( self::$UseMaterialDesign && in_array($this->gvType, ['Bar', 'Column']))
 			{
 				$js = "var $d=google.visualization.arrayToDataTable($data);\n"
 					. "var $c=new google.charts.Bar($('#$id').get(0));\n"
@@ -184,10 +184,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 			$this->css('width', is_numeric($this->gvOptions['width'])?"{$this->gvOptions['width']}px":"{$this->gvOptions['width']}");
 		if( isset($this->gvOptions['height']) )
 			$this->css('height',is_numeric($this->gvOptions['height'])?"{$this->gvOptions['height']}px":"{$this->gvOptions['height']}");
-		
+
 		return parent::PreRender($args);
 	}
-	
+
 	protected function _loadPackage($package)
 	{
 		if( isset(self::$_apis['visualization']) )
@@ -196,9 +196,9 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 				self::$_apis['visualization'][1]['packages'][] = $package;
 		}
 		else
-			parent::_loadApi('visualization','1',array('packages'=>array($package)));
+			parent::_loadApi('visualization','1', ['packages' => [$package]]);
 	}
-	
+
 	protected function _createMC($ds)
 	{
 		$paths = explode(PATH_SEPARATOR,ini_get('include_path'));
@@ -206,12 +206,12 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		array_unique($paths);
 		ini_set('include_path',implode(PATH_SEPARATOR,$paths));
 		require_once('MC/Google/Visualization.php');
-		return new MC_Google_Visualization( 
-				new PDO($ds->GetDsn(),$ds->Username(),$ds->Password() ), 
+		return new MC_Google_Visualization(
+				new PDO($ds->GetDsn(),$ds->Username(),$ds->Password() ),
 				strtolower(array_last(explode("\\",get_class($ds->Driver))))
 			);
 	}
-	
+
 	protected function _dbTypeToGType($db_type)
 	{
 		switch( strtolower($db_type) )
@@ -226,10 +226,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		}
 		return 'text';
 	}
-	
+
 	/**
 	 * @internal AJAX callback for google queries.
-	 * 
+	 *
 	 * See https://developers.google.com/chart/interactive/docs/reference#queryobjects
 	 */
 	function Query()
@@ -243,10 +243,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$mc->handleRequest();
 		die("");
 	}
-	
+
 	/**
 	 * Sets an option.
-	 * 
+	 *
 	 * Valid options vary for the different visualizations.
 	 * @param string $name Option name
 	 * @param mixed $value OPtion value
@@ -259,7 +259,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->gvOptions[$name] = $value;
 		return $this;
 	}
-	
+
 	/**
 	 * @shortcut <GoogleVisualization::opt>('width',$width)-&gt;<GoogleVisualization::opt>('height',$height)
 	 */
@@ -267,7 +267,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	{
 		return $this->opt('width',$width)->opt('height',$height);
 	}
-	
+
 	/**
 	 * @shortcut <GoogleVisualization::opt>('title',$title);
 	 */
@@ -275,10 +275,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	{
 		return $this->opt('title',$title);
 	}
-	
+
 	/**
 	 * Sets the <DataSource> to be used
-	 * 
+	 *
 	 * @param mixed $datasource Optional <DataSource> to use. This may also be the name of the <DataSource> to use as `string`.
 	 * @return static
 	 */
@@ -290,12 +290,12 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 			$this->_ds = $datasource;
 		return $this;
 	}
-	
+
 	/**
 	 * Sets up a google query from a database table.
-	 * 
+	 *
 	 * See https://developers.google.com/chart/interactive/docs/reference#queryobjects
-	 * Calling this will set the <GoogleVisualization> in database mode thus clearing all inline data set with 
+	 * Calling this will set the <GoogleVisualization> in database mode thus clearing all inline data set with
 	 * <GoogleVisualization::setDataHeader> and <GoogleVisualization::addDataRow>
 	 * @param string $table_name Table name
 	 * @param mixed $query The [goolge query](https://google-developers.appspot.com/chart/interactive/docs/querylanguage)
@@ -310,10 +310,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->gvQuery = $query;
 		return $this;
 	}
-	
+
 	/**
 	 * Creates a google query entity from a database table.
-	 * 
+	 *
 	 * See https://developers.google.com/chart/interactive/docs/reference#queryobjects
 	 * @param string $table_name Table name
 	 * @param string $alias Alias name this can be referenced as
@@ -322,24 +322,24 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	function EntityFromTable($table_name, $alias=false)
 	{
 		$schema = $this->_ds->Driver->getTableSchema($table_name);
-		$entity = array(
-			'table' => $schema->Name,
-			'fields' => []
-		);
+		$entity = [
+            'table' => $schema->Name,
+            'fields' => []
+        ];
 		foreach( $schema->Columns as $col )
-			$entity['fields'][$col->Name] = array(
-				'field' => $col->Name,
-				'type' => $this->_dbTypeToGType($col->Type),
-			);
-		
+			$entity['fields'][$col->Name] = [
+                'field' => $col->Name,
+                'type' => $this->_dbTypeToGType($col->Type),
+            ];
+
 		$this->_entities[$alias?$alias:$table_name] = $entity;
 		$this->_data = [];
 		return $this;
 	}
-	
+
 	/**
 	 * Sets up an SQL query (optionally with arguments) as data for this visualization.
-	 * 
+	 *
 	 * @param string $sql The SQL statement
 	 * @param array $args Optional arguments
 	 * @param mixed $datasource Optional <DataSource> to be used
@@ -349,15 +349,15 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	{
 		if( $datasource )
 			$this->setDataSource($datasource);
-		
+
 		return $this->setResultSet($this->_ds->ExecuteSql($sql,$args));
 	}
-	
+
 	/**
 	 * Sets the data header.
-	 * 
+	 *
 	 * Calling this will set this into inline mode thus removing all database related settings (<GoogleVisualization::setDbQuery>).
-	 * 
+	 *
 	 * @param mixed ...$args Header-values
 	 * @return static
 	 */
@@ -366,16 +366,16 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->_entities = []; $this->gvQuery = false;
 		if( count($args)==1 && is_array($args[0]) )
 			$args = array_shift($args);
-		$this->_data = array($this->_applyRowCallbacks($args));
+		$this->_data = [$this->_applyRowCallbacks($args)];
 		return $this;
 	}
-	
+
 	/**
 	 * Adds a data row.
-	 * 
+	 *
 	 * If you did not yet specify a header this row will be used as it.
 	 * Calling this will set this into inline mdoe thus removing all database related settings (<GoogleVisualization::setDbQuery>).
-	 * 
+	 *
 	 * @param mixed ...$args Data values
 	 * @return static
 	 */
@@ -387,10 +387,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->_data[] = $this->_applyRowCallbacks($args);
 		return $this;
 	}
-	
+
 	/**
 	 * Sets all data rows.
-	 * 
+	 *
 	 * If you did not yet specify a header first row will be used as it.
 	 * Calling this will set this into inline mdoe thus removing all database related settings (<GoogleVisualization::setDbQuery>).
 	 * @param array $rows Two-dimensional array containing all the rows data
@@ -399,20 +399,20 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	function setDataRows($rows)
 	{
 		$this->_entities = []; $this->gvQuery = false;
-		
+
 		foreach( $rows as $i=>$r )
 			$rows[$i] = $this->_applyRowCallbacks($r);
-		
+
 		if( count($this->_data)>0 )
-			$this->_data = array_merge(array($this->_data[0]),$rows);
+			$this->_data = array_merge([$this->_data[0]],$rows);
 		else
 			$this->_data = $rows;
 		return $this;
 	}
-	
+
 	/**
 	 * Interconnects two visualizations 'select' events.
-	 * 
+	 *
 	 * @param GoogleVisualization $other_vis The other visualization
 	 * @return static
 	 */
@@ -422,10 +422,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->_addLoadCallback('visualization', $js);
 		return $this;
 	}
-	
+
 	/**
 	 * Manually adds a column specification to the visualization.
-	 * 
+	 *
 	 * @param string $name Column name
 	 * @param string $label Column label
 	 * @param string $type Type of values
@@ -445,10 +445,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->_columnDef[$label] = [$name,$type,$style];
 		return $this;
 	}
-	
+
 	/**
 	 * Adds a callback method that will be called for each added data row.
-	 * 
+	 *
 	 * @param \Closure $callback Method to be called
 	 * @return static
 	 */
@@ -457,16 +457,16 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		$this->_rowCallbacks[] = $callback;
 		return $this;
 	}
-	
+
 	/**
 	 * Adds a role to the last added column.
-	 * 
+	 *
 	 * A role consists of a name and a callback that will be polled for each column in each data row.
 	 * The callback must return the value for the column role.
 	 * Note that this is only implementend for role 'annotation'.
-	 * 
+	 *
 	 * See https://developers.google.com/chart/interactive/docs/roles
-	 * 
+	 *
 	 * @param string $role Role specifier
 	 * @param \Closure $callback Callback function
 	 * @return static
@@ -479,7 +479,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 			$this->_roleCallbacks[$key] = [$role,$callback];
 		return $this;
 	}
-	
+
 	private function getTypedValue($v,$type)
 	{
 		$ci = $this->_culture;
@@ -491,18 +491,18 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
         }
 		switch( $type )
 		{
-			case 'int': 
-			case 'integer': 
-				$v = intval($v); 
+			case 'int':
+			case 'integer':
+				$v = intval($v);
 				break;
-			case 'float': 
-			case 'double': 
-			case 'number': 
+			case 'float':
+			case 'double':
+			case 'number':
 				$v = floatval($v);
                 if( $ci )
-                    $v = ['v'=>$v,'f'=>$ci->FormatNumber($v,(count($extraparams) > 0 ? $extraparams[0] : false), (count($extraparams) > 1 ? $extraparams[1] : true))]; 
+                    $v = ['v'=>$v,'f'=>$ci->FormatNumber($v,(count($extraparams) > 0 ? $extraparams[0] : false), (count($extraparams) > 1 ? $extraparams[1] : true))];
 				break;
-			case 'currency': 
+			case 'currency':
 				$v = floatval($v);
 				if( $ci )
 					$v = ['v'=>$v,'f'=>$ci->FormatCurrency($v,(count($extraparams) > 0 ? $extraparams[0] : true))];
@@ -515,23 +515,23 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
                         $v = ['v'=>$v,'f'=>$ci->FormatDate($v)];
                 }
 				break;
-			case 'time': 
+			case 'time':
 				$v = new DateTime($v);
 				if( $ci )
 					$v = ['v'=>$v,'f'=>$ci->FormatTime($v)];
 				break;
-			case 'datetime': 
+			case 'datetime':
 				$v = new DateTime($v);
 				if( $ci )
 					$v = ['v'=>$v,'f'=>$ci->FormatDateTime($v)];
 				break;
-			case 'timeofday': 
+			case 'timeofday':
                 $anextv = explode(':', $v);
                 $nextv = sprintf('%02d', $anextv[0]+1).':'.$anextv[1];
                 $v = ['v' => $v, 'f' => $v.'-'.$nextv];
 				break;
-			case 'duration': 
-                if( !$v ) $v = "0";					
+			case 'duration':
+                if( !$v ) $v = "0";
                 if( $ci )
                     $v = ['v'=>floatval($v),'f'=>$ci->FormatDuration($v*60, (count($extraparams) > 0 ? $extraparams[0] : true))];
                 else
@@ -545,13 +545,13 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		}
 		return $v;
 	}
-	
+
 	/**
 	 * Adds a <ResultSet> as data for this visualization.
-	 * 
+	 *
 	 * The set may contain any column but it must contain all columns defined
 	 * thru <GoogleVisualization::addColumn> or <GoogleVisualization::addColumnRole>.
-	 * 
+	 *
 	 * @param \ScavixWDF\Model\ResultSet $rs <ResultSet> with data.
 	 * @return static
 	 */
@@ -565,7 +565,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 			else
 				$head[] = $key;
 		}
-		$this->_data = array($head);
+		$this->_data = [$head];
 		foreach( $rs->results() as $row )
 		{
 			$d = [];
@@ -581,22 +581,22 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 				if( !isset($row[$name]) )
 					$row[$name] = "";
 				$d[$name] = $this->getTypedValue($row[$name],$type);
-                
+
                 if( ($this instanceof gvPieChart) && is_array(self::$Colors) && !is_array($d[$name]) && isset(self::$Colors[$d[$name]]) )
                 {
                     $cols = force_array($this->opt('colors'));
                     $cols[] = self::$Colors[$d[$name]];
-                    $this->opt('colors',$cols);			
+                    $this->opt('colors',$cols);
                 }
 			}
 			$this->_data[] = $this->_applyRowCallbacks($d);
 		}
 		return $this;
 	}
-	
+
     /**
      * Sets up a <ResultSet> as source of multiple data series.
-     * 
+     *
      * @param \ScavixWDF\Model\ResultSet $rs The resultset containing the series data
      * @param string $xAxisCol Name of column containing the xAxis data
      * @param string $newColSpecifier Name of column containing the series identifiers
@@ -607,7 +607,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 	function setMultiSeriesResultSet($rs,$xAxisCol,$newColSpecifier,$newColValue,$newcolformat = 'number')
 	{
 		$results = $rs->results();
-		
+
 		$xAxisColDef = $xAxisCol;
 		if( !isset($this->_columnDef[$xAxisCol]) )
 		{
@@ -635,18 +635,18 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 				continue;
 			$this->addColumn($key,$key,$newcolformat);
 		}
-		
+
 		$head = [];
 		foreach( $this->_columnDef as $key=>$def )
 		{
 			if( isset($this->_roleCallbacks[$key]) )
-				$head[] = array('role'=>$def);
-			else
-				$head[] = "$key";
-		}
-		$this->_data = array($head);
+				$head[] = ['role' => $def];
+            else
+                $head[] = "$key";
+        }
+        $this->_data = [$head];
 
-		foreach( $results as $row )
+        foreach( $results as $row )
 		{
 			$xVal = $row[$xAxisCol];
 			if( !isset($this->_data[$xVal]) )
@@ -658,10 +658,10 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		}
 		return $this;
 	}
-    
+
     /**
      * Ensures a continous axis of type Date.
-     * 
+     *
      * @param string $format Optional format
      * @return $this
      */
@@ -673,16 +673,16 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
         $start = \ScavixWDF\Base\DateTimeEx::Make(array_shift($keys));
         $end = \ScavixWDF\Base\DateTimeEx::Make(array_pop($keys));
         $null = array_combine(array_keys($this->_columnDef), array_fill(0,count($this->_columnDef),0));
-        
+
         $first = $this->_data[0][0]; // get the key of the first column
-        
+
         if( $start > $end )
         {
             $reverse = $start;
             $start = $end;
             $end = $reverse;
         }
-        
+
         $res = [];
         while( $start < $end )
         {
@@ -696,29 +696,29 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
             }
             $start = $start->Offset(1,'day');
         }
-        
+
         // preserve column definition in the first place
         if( isset($reverse) )
             $this->_data = array_merge([0=>$this->_data[0]],array_reverse($res));
         else
             $this->_data = array_merge([0=>$this->_data[0]],$res);
-        
+
         return $this;
     }
-    
+
     /**
      * Ensures a continous axis of type Integer.
-     * 
+     *
      * @return $this
      */
     function makeContinousIntAxis()
     {
         $null = array_fill(0,count($this->_data[0]),0);
-        
+
         $keys = array_map(function($i){ return $i[array_keys($i)[0]]; }, array_slice($this->_data,1) );
         $min = min($keys); $max = max($keys);
         $rows = array_fill($min,$max-$min+1,$null);
-        
+
         foreach( array_slice($this->_data,1) as $item )
         {
             $k = array_keys($item)[0];
@@ -733,7 +733,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
         }
         array_unshift($rows,$this->_data[array_keys($this->_data)[0]]);
         $this->_data = $rows;
-        
+
         return $this;
     }
 }

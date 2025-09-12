@@ -32,7 +32,7 @@ use stdClass;
 
 /**
  * This is a google map.
- * 
+ *
  * See https://developers.google.com/maps/documentation/javascript/tutorial
  */
 class gMap extends GoogleControl
@@ -41,14 +41,14 @@ class gMap extends GoogleControl
 	const SATELLITE = 'google.maps.MapTypeId.SATELLITE';
 	const HYBRID = 'google.maps.MapTypeId.HYBRID';
 	const TERRAIN = 'google.maps.MapTypeId.TERRAIN';
-	
-	public $gmOptions = array('language'=>'en','region'=>'DE');
-	private $_basicOptions = array('center'=>'new google.maps.LatLng(-34.397, 150.644)','zoom'=>13,'mapTypeId'=>self::ROADMAP,'scrollwheel'=>false);
-	private $_markers = [];
-	private $_addresses = [];
-	
+
+    public $gmOptions = ['language'=>'en','region'=>'DE'];
+    private $_basicOptions = ['center'=>'new google.maps.LatLng(-34.397, 150.644)','zoom'=>13,'mapTypeId'=>self::ROADMAP,'scrollwheel'=>false];
+    private $_markers = [];
+    private $_addresses = [];
+
 	public $AutoShowHints = false;
-	
+
 	/**
 	 * @param array $options See https://developers.google.com/maps/documentation/javascript/tutorial#MapOptions
 	 */
@@ -56,7 +56,7 @@ class gMap extends GoogleControl
 	{
         global $CONFIG;
 		parent::__construct('div',false);
-        if(isset($CONFIG['google']) && isset($CONFIG['google']['maps']) && isset($CONFIG['google']['maps']['apikey'])) 
+        if(isset($CONFIG['google']) && isset($CONFIG['google']['maps']) && isset($CONFIG['google']['maps']['apikey']))
             $this->gmOptions['key'] = $CONFIG['google']['maps']['apikey'];
 
         if(!isset($options['language']) || !isset($options['region']))
@@ -70,10 +70,10 @@ class gMap extends GoogleControl
                     $options['language'] = $ci->ResolveToLanguage()->Code;
             }
         }
-		$this->gmOptions = array_merge($this->gmOptions,$options);
-		$this->_loadApi('maps','3',array('other_params'=>http_build_query($this->gmOptions)));
+		$this->gmOptions = array_merge($this->gmOptions, $options);
+		$this->_loadApi('maps','3',['other_params'=>http_build_query($this->gmOptions)]);
 	}
-	
+
 	/**
 	 * @override
 	 */
@@ -82,10 +82,10 @@ class gMap extends GoogleControl
 		$id = $this->id;
         $this->_basicOptions['center'] = '[jscode]'.$this->_basicOptions['center'];
         $this->_basicOptions['mapTypeId'] = '[jscode]'.$this->_basicOptions['mapTypeId'];
-		if( $this->AutoShowHints ) 
+		if( $this->AutoShowHints )
 			$this->_basicOptions['autoShowHints'] = true;
-		$init = array("wdf.gmap.init('$id',".system_to_json($this->_basicOptions).");");
-		
+		$init = ["wdf.gmap.init('$id'," . system_to_json($this->_basicOptions) . ");"];
+
 		foreach( $this->_markers as $m )
 		{
 			list($lat,$lng,$opt) = $m;
@@ -99,14 +99,14 @@ class gMap extends GoogleControl
 				$init[] = "wdf.gmap.addAddress('$id',".json_encode($a).");";
 		}
     	$init[] = "wdf.gmap.showAllMarkers('$id');";
-			
+
 		$this->_addLoadCallback('maps', $init);
 		return parent::PreRender($args);
 	}
-	
+
 	/**
 	 * Adds a marker to the map.
-	 * 
+	 *
 	 * @param float $lat Latitute
 	 * @param float $lng Longitude
 	 * @param array $options See https://developers.google.com/maps/documentation/javascript/reference#MarkerOptions
@@ -114,13 +114,13 @@ class gMap extends GoogleControl
 	 */
 	function AddMarker($lat, $lng, $options = [])
 	{
-		$this->_markers[] = array($lat,$lng,$options);
+		$this->_markers[] = [$lat, $lng, $options];
 		return $this;
 	}
-	
+
 	/**
 	 * Shortcut for a named marker.
-	 * 
+	 *
 	 * @param float $lat Latitude
 	 * @param float $lng Longitude
 	 * @param string $title Marker title
@@ -130,13 +130,13 @@ class gMap extends GoogleControl
 	function AddMarkerTitled($lat, $lng, $title, $options = [])
 	{
 		$options['title'] = $title;
-		$this->_markers[] = array($lat,$lng,$options);
+		$this->_markers[] = [$lat, $lng, $options];
 		return $this;
 	}
 
 	/**
 	 * Adds an address to the map.
-	 * 
+	 *
 	 * Will use googles geolocation to resolve the address to a marker.
 	 * @param string $address The address as string
 	 * @param string $title An optional title
@@ -144,13 +144,13 @@ class gMap extends GoogleControl
 	 */
 	function AddAddress($address,$title=false)
 	{
-		$this->_addresses[] = $title?array('address'=>$address,'title'=>$title):$address;
+		$this->_addresses[] = $title ? ['address' => $address, 'title' => $title] : $address;
 		return $this;
 	}
-	
+
 	/**
 	 * Sets the maps center point.
-	 * 
+	 *
 	 * @param float $lat Latitude
 	 * @param float $lng Longitude
 	 * @return static
@@ -160,10 +160,10 @@ class gMap extends GoogleControl
 		$this->_basicOptions['center'] = "new google.maps.LatLng($lat,$lng)";
 		return $this;
 	}
-	
+
 	/**
 	 * Sets the maps type.
-	 * 
+	 *
 	 * @param string $type One of gMap::ROADMAP, gMap::SATELLITE, gMap::HYBRID, gMap::TERRAIN
 	 * @return static
 	 */
@@ -172,10 +172,10 @@ class gMap extends GoogleControl
 		$this->_basicOptions['mapTypeId'] = $type;
 		return $this;
 	}
-	
+
 	/**
 	 * Sets the maps zoom level.
-	 * 
+	 *
 	 * @param int $zoomlevel The initial zoom level
 	 * @return static
 	 */
@@ -184,10 +184,10 @@ class gMap extends GoogleControl
 		$this->_basicOptions['zoom'] = $zoomlevel;
 		return $this;
 	}
-	
+
 	/**
 	 * En-/Disabled the default map UI
-	 * 
+	 *
 	 * @param bool $disabled If true UI will be disabled
 	 * @return static
 	 */
@@ -196,10 +196,10 @@ class gMap extends GoogleControl
 		$this->_basicOptions['disableDefaultUI'] = $disabled;
 		return $this;
 	}
-    
+
     /**
      * Finds a geolocation from a search string.
-	 * 
+	 *
      * @suppress PHP0416
      * @param string $search Search string
 	 * @return mixed An object containing formatted_address, latitude and longitude or false on error
@@ -209,7 +209,7 @@ class gMap extends GoogleControl
         global $CONFIG;
         if(!isset($CONFIG['google']) || !isset($CONFIG['google']['maps']) || !isset($CONFIG['google']['maps']['apikey']))
             return log_return('missing Google Maps API KEY for '.__FUNCTION__, false);
-        
+
         $ret = new stdClass();
         $geourl = "https://maps.google.com/maps/api/geocode/xml?key=".$CONFIG['google']['maps']['apikey']."&address=".urlencode($search);
         $xmlsrc = file_get_contents($geourl);

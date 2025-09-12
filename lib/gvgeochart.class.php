@@ -29,7 +29,7 @@ namespace ScavixWDF\Google;
 
 /**
  * A geo chart.
- * 
+ *
  * See https://developers.google.com/chart/interactive/docs/gallery
  */
 class gvGeoChart extends GoogleVisualization
@@ -42,7 +42,7 @@ class gvGeoChart extends GoogleVisualization
 		parent::__construct('GeoChart',$options,$query,$ds);
 		$this->_loadPackage('geochart');
 	}
-	
+
 	/**
 	 * @shortcut <GoogleVisualization::opt>('displayMode',$mode)
 	 */
@@ -50,15 +50,15 @@ class gvGeoChart extends GoogleVisualization
 	{
 		return $this->opt('displayMode',$mode);
 	}
-	
+
 	/**
-	 * @shortcut <GoogleVisualization::opt>('colorAxis',array('minValue'=>$min,'maxValue'=>$max,'colors'=>$colors))
+	 * @shortcut <GoogleVisualization::opt>('colorAxis',['minValue'=>$min,'maxValue'=>$max,'colors'=>$colors])
 	 */
 	function setColorAxis($min,$max,$colors)
 	{
-		return $this->opt('colorAxis',array('minValue'=>$min,'maxValue'=>$max,'colors'=>$colors));
+		return $this->opt('colorAxis', ['minValue' => $min, 'maxValue' => $max, 'colors' => $colors]);
 	}
-	
+
 	/**
 	 * @shortcut <GoogleVisualization::opt>('region',$region)
 	 */

@@ -34,7 +34,7 @@ use ScavixWDF\Localization\CultureInfo;
 
 /**
  * Base class for all google controls.
- * 
+ *
  * Ensures all libraries are loaded correctly and stuff.
  */
 class GoogleControl extends Control
@@ -45,7 +45,7 @@ class GoogleControl extends Control
 	private $frozen = true;
 	public $_culture = false;
     private $gchartsversion = false;
-	
+
 	/**
 	 * @param string $tag Allows to specify another tag for the wrapper control, default for google controls is &lt;span&gt;
 	 */
@@ -55,7 +55,7 @@ class GoogleControl extends Control
 		$this->frozen = $frozen;
         $this->gchartsversion = $gchartsversion;
 	}
-    
+
     protected function __collectResourcesInternal($template, &$static_stack = [])
     {
         $res = parent::__collectResourcesInternal($template, $static_stack);
@@ -65,16 +65,16 @@ class GoogleControl extends Control
             $res[] = '//www.google.com/jsapi';
         return $res;
     }
-	
+
 	function __dispose()
 	{
 		delete_object($this->id);
 		$this->disposed = true;
 	}
-	
+
 	/**
 	 * Assigns a culture to this control.
-	 * 
+	 *
 	 * This will be used for value formatting.
 	 * @param CultureInfo $ci The culture object
 	 * @return static
@@ -84,7 +84,7 @@ class GoogleControl extends Control
 		$this->_culture = $ci;
 		return $this;
 	}
-	
+
 	/**
 	 * @override
 	 */
@@ -106,7 +106,7 @@ class GoogleControl extends Control
 		}
 		return parent::PreRender($args);
 	}
-	
+
 	/**
 	 * @internal PreRender HOOK handler
 	 */
@@ -116,49 +116,49 @@ class GoogleControl extends Control
 		foreach( self::$_apis as $api=>$definition )
 		{
             if(count($definition) > 1)
-                list($version,$options) = $definition;
+                [$version, $options] = $definition;
             else
             {
                 $version = 1;
                 $options = array_first($definition);
             }
-			if( isset($options['callback']) )
-				$options['callback'] = "function(){ ".implode("\n",$options['callback'])." }";
-			else
-				$options['callback'] = "function(){}";
-			
-			if( $this->_culture )
-				$options['language'] = $this->_culture->ResolveToLanguage()->Code;
-			
-			if( $this->frozen )
-			{
-				$loader[] = "window.googleLoadCallback = ".$options['callback'];
-				$options['callback'] = 'function(){ window.googleLoadCallback(); }';
-				$loader[] = "if( window.googleLoaded ) { window.googleLoadCallback(); } else { window.googleLoaded = true; google.charts.load('".$this->gchartsversion."',".system_to_json($options)."); }";
-			}
-			else
-				$loader[] = "google.load('$api','$version',".system_to_json($options).");";
-		}
-		$controller = $args[0];
-		if( system_is_ajax_call() && (($controller instanceof GoogleControl) || $controller->hasContentOfInstance('ScavixWDF\Google\GoogleControl')) )
-			$controller->script($loader);
-		elseif( $controller instanceof HtmlPage )
-			$controller->addDocReady($loader,false); // <- see the 'false'? we add these codes inline, not into the ready handler as this crashes
-	}
-	
-	protected function _loadApi($api,$version,$options)
-	{
-		self::$_apis[$api] = array($version, $options);
-	}
-	
+            if (isset($options['callback']))
+                $options['callback'] = "function(){ " . implode("\n", $options['callback']) . " }";
+            else
+                $options['callback'] = "function(){}";
+
+            if ($this->_culture)
+                $options['language'] = $this->_culture->ResolveToLanguage()->Code;
+
+            if ($this->frozen)
+            {
+                $loader[] = "window.googleLoadCallback = " . $options['callback'];
+                $options['callback'] = 'function(){ window.googleLoadCallback(); }';
+                $loader[] = "if( window.googleLoaded ) { window.googleLoadCallback(); } else { window.googleLoaded = true; google.charts.load('" . $this->gchartsversion . "'," . system_to_json($options) . "); }";
+            }
+            else
+                $loader[] = "google.load('$api','$version'," . system_to_json($options) . ");";
+        }
+        $controller = $args[0];
+        if (system_is_ajax_call() && (($controller instanceof GoogleControl) || $controller->hasContentOfInstance('ScavixWDF\Google\GoogleControl')))
+            $controller->script($loader);
+        elseif ($controller instanceof HtmlPage)
+            $controller->addDocReady($loader, false); // <- see the 'false'? we add these codes inline, not into the ready handler as this crashes
+    }
+
+    protected function _loadApi($api, $version, $options)
+    {
+        self::$_apis[$api] = [$version, $options];
+    }
+
 	protected function _addLoadCallback($api,$script,$prepend=false)
 	{
 		if( $this->disposed )
 			return;
-		
+
 		if( !isset(self::$_apis[$api][1]['callback']) )
 			self::$_apis[$api][1]['callback'] = [];
-		
+
 		if( is_array($script) )
 			$script = implode("\n",$script);
 

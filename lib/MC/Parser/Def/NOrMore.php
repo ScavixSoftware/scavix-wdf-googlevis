@@ -16,12 +16,12 @@
 class MC_Parser_Def_NOrMore extends MC_Parser_Def {
     public $expr;
     public $min;
-    
+
     public function __construct(MC_Parser_Def $expr, $min) {
         $this->expr = $expr;
         $this->min = (int) $min;
     }
-    
+
     public function _parse($str, $loc) {
         $toks = $this->tokenGroup();
         try {
@@ -32,18 +32,18 @@ class MC_Parser_Def_NOrMore extends MC_Parser_Def {
         } catch(MC_Parser_ParseError $e) {
             //Ignore parsing errors - that just means we're done
         }
-        
+
         if($toks->count() < $this->min) {
             throw new MC_Parser_ParseError('Expected: ' . $this->min . ' or more <whatever>', $str, $loc);
         }
-        
+
         if($toks->count() == 0) {
             //If this token is empty, remove it from the result group
             $toks = null;
         }
-        return array($loc, $toks);
+        return [$loc, $toks];
     }
-    
+
     public function _name() {
         return $this->min . ' or more: ' . $this->expr->getName();
     }
