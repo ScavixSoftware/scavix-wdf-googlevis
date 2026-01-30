@@ -31,6 +31,7 @@ use ScavixWDF\Base\Control;
 use ScavixWDF\Base\HtmlPage;
 use ScavixWDF\Base\Renderable;
 use ScavixWDF\Localization\CultureInfo;
+use function count;
 
 /**
  * Base class for all google controls.
@@ -59,10 +60,7 @@ class GoogleControl extends Control
     protected function __collectResourcesInternal($template, &$static_stack = [])
     {
         $res = parent::__collectResourcesInternal($template, $static_stack);
-        if( $this->frozen )
-            $res[] = '//www.gstatic.com/charts/loader.js';
-        else
-            $res[] = '//www.google.com/jsapi';
+        $res[] = ($this->frozen) ? '//www.gstatic.com/charts/loader.js' : '//www.google.com/jsapi';
         return $res;
     }
 

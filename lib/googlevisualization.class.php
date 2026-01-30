@@ -31,8 +31,18 @@ use DateTime;
 use MC_Google_Visualization;
 use PDO;
 use ScavixWDF\ICallable;
-use ScavixWDF\Localization\CultureInfo;
 use ScavixWDF\Model\DataSource;
+use function array_slice;
+use function count;
+use function floatval;
+use function get_called_class;
+use function get_class;
+use function in_array;
+use function intval;
+use function is_array;
+use function is_null;
+use function is_string;
+use function sprintf;
 
 /**
  * Base class for google visualization controls.
@@ -84,7 +94,7 @@ abstract class GoogleVisualization extends GoogleControl implements ICallable
 		parent::__construct();
 		$this->addClass('google_vis');
 
-		$this->_ds = $ds?$ds:(self::$DefaultDatasource?self::$DefaultDatasource:DataSource::Get());
+		$this->_ds = $ds ?: (self::$DefaultDatasource ?: DataSource::Get());
 
         $this->gvOptions = ['tooltip' => ['isHtml' => true]];
 

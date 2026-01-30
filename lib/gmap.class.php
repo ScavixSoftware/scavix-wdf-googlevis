@@ -29,6 +29,7 @@ namespace ScavixWDF\Google;
 
 use Exception;
 use stdClass;
+use function is_array;
 
 /**
  * This is a google map.
@@ -217,7 +218,7 @@ class gMap extends GoogleControl
             $xml = simplexml_load_string($xmlsrc);
         }
         catch(Exception $e){
-            log_error($geourl."\n".$xmlsrc);
+            log_error("{$geourl}\n{$xmlsrc}");
             return false;
         }
 
