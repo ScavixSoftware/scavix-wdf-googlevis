@@ -57,7 +57,7 @@ class GoogleControl extends Control
         $this->gchartsversion = $gchartsversion;
 	}
 
-    protected function __collectResourcesInternal($template, &$static_stack = [])
+    protected function __collectResourcesInternal($template, &$static_stack)
     {
         $res = parent::__collectResourcesInternal($template, $static_stack);
         $res[] = ($this->frozen) ? '//www.gstatic.com/charts/loader.js' : '//www.google.com/jsapi';
