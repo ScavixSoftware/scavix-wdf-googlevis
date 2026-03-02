@@ -57,13 +57,6 @@ class GoogleControl extends Control
         $this->gchartsversion = $gchartsversion;
 	}
 
-    protected function __collectResourcesInternal($template, &$static_stack)
-    {
-        $res = parent::__collectResourcesInternal($template, $static_stack);
-        $res[] = ($this->frozen) ? '//www.gstatic.com/charts/loader.js' : '//www.google.com/jsapi';
-        return $res;
-    }
-
 	function __dispose()
 	{
 		delete_object($this->id);
@@ -110,6 +103,7 @@ class GoogleControl extends Control
 	 */
 	function AddLoaderCode($args)
 	{
+        \ScavixWDF\Wdf::Response()->addResource(($this->frozen) ? '//www.gstatic.com/charts/loader.js' : '//www.google.com/jsapi');
 		$loader = [];
 		foreach( self::$_apis as $api=>$definition )
 		{
