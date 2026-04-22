@@ -103,7 +103,7 @@ class GoogleControl extends Control
 	 */
 	function AddLoaderCode($args)
 	{
-        \ScavixWDF\Wdf::Response()->addResource(($this->frozen) ? '//www.gstatic.com/charts/loader.js' : '//www.google.com/jsapi');
+        \ScavixWDF\Wdf::Response()->addResource(($this->frozen) ? 'https://www.gstatic.com/charts/loader.js' : 'https://www.google.com/jsapi');
 		$loader = [];
 		foreach( self::$_apis as $api=>$definition )
 		{
