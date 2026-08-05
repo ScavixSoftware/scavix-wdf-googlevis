@@ -32,6 +32,5 @@ Wdf::RegisterPackage('googlevis','googlevis_init');
  */
 function googlevis_init()
 {
-    classpath_add(__DIR__.'/lib',false);
     add_wdfresource_dir(__DIR__ . '/res');
 }
