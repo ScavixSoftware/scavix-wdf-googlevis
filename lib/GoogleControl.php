@@ -137,7 +137,7 @@ class GoogleControl extends Control
         if (\ScavixWDF\Wdf::Request()->isAjax() && (($controller instanceof GoogleControl) || $controller->hasContentOfInstance('ScavixWDF\Google\GoogleControl')))
             $controller->script($loader);
         elseif ($controller instanceof HtmlPage)
-            $controller->addDocReady($loader, false); // <- see the 'false'? we add these codes inline, not into the ready handler as this crashes
+            $controller->addScript($loader, false); // <- see the 'false'? we add these codes inline, not into the ready handler as this crashes
     }
 
     protected function _loadApi($api, $version, $options)
